@@ -13,41 +13,39 @@
        access-decision-manager-ref="accessDecisionManager">
         <!--,IS_AUTHENTICATED_FULLY-->
         <security:intercept-url pattern="/admin/*" access="ROLE_ADMIN" />
-        <!--<security:form-login login-page="/custom_login"
-           authentication-failure-handler-ref="serverErrorHandler"
-           username-parameter="user_param"
-           password-parameter="pass_param"/>-->
         <security:form-login login-page="/custom_login"
              authentication-failure-handler-ref="serverErrorHandler"
              username-parameter="user_param"
              password-parameter="pass_param"/>
-        <security:custom-filter ref="digestFilter" before="BASIC_AUTH_FILTER"/>
+        <!--<security:custom-filter ref="digestFilter" before="BASIC_AUTH_FILTER"/>-->
         <security:remember-me key="terror-key"/>
+        <security:logout delete-cookies="JESSIONID"
+           success-handler-ref="logoutRedirectToAny"/>
     </security:http>
 
-    <security:authentication-manager>
+    <!--<security:authentication-manager>
         <security:authentication-provider>
             <security:user-service id="userService">
                 <security:user name="admin" password="admin" authorities="ROLE_ADMIN" />
             </security:user-service>
         </security:authentication-provider>
-    </security:authentication-manager>
+    </security:authentication-manager>-->
 
 
     <bean id="serverErrorHandler"
        class="com.apress.pss.terrormovies.security.ServerErrorFailureHandler" />
 
-    <bean id="digestFilter"
+    <!--<bean id="digestFilter"
        class="org.springframework.security.web.authentication.www.DigestAuthenticationFilter">
         <property name="userDetailsService" ref="userService" />
         <property name="authenticationEntryPoint" ref="digestEntryPoint" />
-    </bean>
+    </bean>-->
 
-    <bean id="digestEntryPoint"
+    <!--<bean id="digestEntryPoint"
        class="org.springframework.security.web.authentication.www.DigestAuthenticationEntryPoint">
         <property name="realmName" value="terrormovies-realm"/>
         <property name="key" value="terrorific"/>
-    </bean>
+    </bean>-->
 
     <bean id="accessDecisionManager"
        class="org.springframework.security.access.vote.UnanimousBased">
@@ -57,5 +55,34 @@
                 <bean class="org.springframework.security.access.vote.AuthenticatedVoter"/>
             </list>
         </constructor-arg>
+    </bean>
+
+    <security:authentication-manager>
+        <security:authentication-provider user-service-ref="inMemoryUserServiceWithCustomUser"/>
+    </security:authentication-manager>
+
+    <bean id="inMemoryUserServiceWithCustomUser"
+          class="com.apress.pss.terrormovies.spring.CustomInMemoryUserDetailsManager">
+        <constructor-arg>
+            <list>
+                <bean class="com.apress.pss.terrormovies.model.User">
+                    <constructor-arg value="admin"/>
+                    <constructor-arg value="admin"/>
+                    <constructor-arg>
+                        <list>
+                            <bean class="org.springframework.security.core.authority.SimpleGrantedAuthority">
+                                <constructor-arg value="ROLE_ADMIN"/>
+                            </bean>
+                        </list>
+                    </constructor-arg>
+                    <constructor-arg value="Scarioni"/>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="logoutRedirectToAny"
+       class="org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler">
+        <property name="targetUrlParameter" value="redirectTo"/>
     </bean>
 </beans>

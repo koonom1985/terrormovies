@@ -1,5 +1,7 @@
 package com.apress.pss.terrormovies.controller;
 
+import com.apress.pss.terrormovies.model.User;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +22,9 @@ public class AdminController {
     @RequestMapping(method = RequestMethod.GET, value = "/movies")
     @ResponseBody
     public String createMovie() {
-        return "movie x";
+        User user = (User) SecurityContextHolder.getContext().
+                getAuthentication().getPrincipal();
+        System.out.println("returned movie!");
+        return "User " + user.getLastname() + " is accessing movie x";
     }
 }
