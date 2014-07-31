@@ -10,9 +10,34 @@
 	">
 
     <security:http auto-config="true"
-       access-decision-manager-ref="accessDecisionManager">
+            access-decision-manager-ref="accessDecisionManager">
         <!--,IS_AUTHENTICATED_FULLY-->
-        <security:intercept-url pattern="/admin/*" access="ROLE_ADMIN" />
+        <security:intercept-url pattern="custom_login" requires-channel="https"/>
+        <security:intercept-url pattern="j_spring_security_check" requires-channel="https"/>
+        <!--<security:intercept-url pattern="/admin/*"
+            access="hasIpAddress('127.0.0.1') and
+            (isAnonymous() ? false : hasRole('ROLE_ADMIN') )" />
+        <security:intercept-url pattern="/movies/**/*"
+            access="hasRole('ROLE_USER')"/>
+        <security:intercept-url pattern="/movies/*"
+            access="hasRole('ROLE_GUEST')"/>
+        <security:intercept-url pattern="/movies/*"
+            access="hasAnyRole('ROLE_USER','ROLE_VIP')"/>
+        <security:intercept-url pattern="/j_spring_security_switch_user"
+            access="hasRole('ROLE_ADMIN')"/>
+        <security:intercept-url pattern="/j_spring_security_exit_user"
+            access="hasRole('ROLE_ADMIN')"/>
+        <security:custom-filter ref="switchUser" before="FILTER_SECURITY_INTERCEPTOR"/>
+        -->
+        <security:intercept-url pattern="/admin/*"
+            access="ROLE_ADMIN"/>
+        <security:intercept-url pattern="/movies/*"
+            access="ROLE_USER"/>
+        <security:intercept-url pattern="/movies/*"
+            access="ROLE_GUEST"/>
+        <!--<security:session-management>
+            <security:concurrency-control max-sessions="2"/>
+        </security:session-management>-->
         <security:form-login login-page="/custom_login"
              authentication-failure-handler-ref="serverErrorHandler"
              username-parameter="user_param"
@@ -21,15 +46,26 @@
         <security:remember-me key="terror-key"/>
         <security:logout delete-cookies="JESSIONID"
            success-handler-ref="logoutRedirectToAny"/>
+    <!--<security:expression-handler ref="expressionHandler"/>-->
     </security:http>
 
-    <!--<security:authentication-manager>
+<!--<security:authentication-manager>
+    <security:authentication-provider>
+        <security:user-service id="userService">
+            <security:user name="admin" password="admin" authorities="ROLE_ADMIN" />
+        </security:user-service>
+    </security:authentication-provider>
+</security:authentication-manager>-->
+
+    <security:authentication-manager>
         <security:authentication-provider>
-            <security:user-service id="userService">
-                <security:user name="admin" password="admin" authorities="ROLE_ADMIN" />
+            <security:user-service>
+                <security:user name="car" password="scarvarez" authorities="ROLE_USER" />
+                <security:user name="mon" password="scarvarez" authorities="ROLE_ADMIN" />
+                <security:user name="bea" password="scarvarez" authorities="ROLE_GUEST" />
             </security:user-service>
         </security:authentication-provider>
-    </security:authentication-manager>-->
+    </security:authentication-manager>
 
 
     <bean id="serverErrorHandler"
@@ -47,7 +83,7 @@
         <property name="key" value="terrorific"/>
     </bean>-->
 
-    <bean id="accessDecisionManager"
+    <!--<bean id="accessDecisionManager"
        class="org.springframework.security.access.vote.UnanimousBased">
         <constructor-arg>
             <list>
@@ -55,9 +91,32 @@
                 <bean class="org.springframework.security.access.vote.AuthenticatedVoter"/>
             </list>
         </constructor-arg>
+    </bean>-->
+
+    <bean id="accessDecisionManager"
+          class="org.springframework.security.access.vote.AffirmativeBased">
+        <constructor-arg>
+            <list>
+                <ref bean="roleVoter"/>
+            </list>
+        </constructor-arg>
     </bean>
 
-    <security:authentication-manager>
+    <bean id="roleVoter"
+          class="org.springframework.security.access.vote.RoleHierarchyVoter">
+        <constructor-arg>
+            <bean class="org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl">
+                <property name="hierarchy">
+                    <value>
+                        ROLE_ADMIN > ROLE_USER
+                        ROLE_USER > ROLE_GUEST
+                    </value>
+                </property>
+            </bean>
+        </constructor-arg>
+    </bean>
+
+<!--    <security:authentication-manager>
         <security:authentication-provider user-service-ref="inMemoryUserServiceWithCustomUser"/>
     </security:authentication-manager>
 
@@ -76,13 +135,51 @@
                         </list>
                     </constructor-arg>
                     <constructor-arg value="Scarioni"/>
+                    <constructor-arg value="19"/>
+                </bean>
+                <bean class="com.apress.pss.terrormovies.model.User">
+                    <constructor-arg value="paco"/>
+                    <constructor-arg value="tous"/>
+                    <constructor-arg>
+                        <list>
+                            <bean class="org.springframework.security.core.authority.SimpleGrantedAuthority">
+                                <constructor-arg value="ROLE_USER"/>
+                            </bean>
+                        </list>
+                    </constructor-arg>
+                    <constructor-arg value="Miranda"/>
+                    <constructor-arg value="20"/>
+                </bean>
+                <bean class="com.apress.pss.terrormovies.model.User">
+                    <constructor-arg value="lucas"/>
+                    <constructor-arg value="fernandez"/>
+                    <constructor-arg>
+                        <list>
+                            <bean class="org.springframework.security.core.authority.SimpleGrantedAuthority">
+                                <constructor-arg value="ROLE_VIP"/>
+                            </bean>
+                            <bean class="org.springframework.security.core.authority.SimpleGrantedAuthority">
+                                <constructor-arg value="ROLE_USER"/>
+                            </bean>
+                        </list>
+                    </constructor-arg>
+                    <constructor-arg value="Silva"/>
+                    <constructor-arg value="20"/>
                 </bean>
             </list>
         </constructor-arg>
-    </bean>
+    </bean>-->
 
     <bean id="logoutRedirectToAny"
        class="org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler">
         <property name="targetUrlParameter" value="redirectTo"/>
     </bean>
+
+    <bean id="expressionHandler"
+       class="com.apress.pss.terrormovies.security.CustomWebSecurityExpressionHandler"/>
+    <!--<bean id="switchUser"
+       class="org.springframework.security.web.authentication.switchuser.SwitchUserFilter">
+        <property name="userDetailsService" ref="userService"/>
+        <property name="targetUrl" value="/"/>
+    </bean>-->
 </beans>
